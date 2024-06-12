@@ -1,0 +1,48 @@
+CREATE DATABASE gourmetDelight;
+
+USE gourmetDelight;
+
+CREATE TABLE Clientes (
+	idCliente INT AUTO_INCREMENT,
+	nombre VARCHAR(100),
+	correo_electronico VARCHAR(100),
+	telefono VARCHAR(15),
+	fecha_registro DATE,
+	CONSTRAINT pkIdCliente PRIMARY KEY (idCliente)
+);
+
+CREATE TABLE Menus (
+	idMenu INT AUTO_INCREMENT,
+	nombre VARCHAR(100),
+	descripcion TEXT,
+	precio DECIMAL(10,2),
+	CONSTRAINT pkIdMenu PRIMARY KEY (idMenu)
+);
+
+CREATE TABLE Pedidos (
+	idPedidos INT AUTO_INCREMENT,
+	idCliente INT,
+	fecha DATE,
+	total DECIMAL(10,2),
+	CONSTRAINT idPedidos PRIMARY KEY (idPedidos),
+	CONSTRAINT fkIdCliente FOREING KEY (idCliente) REFERENCES Clientes(idCliente)
+);
+CREATE TABLE Pedidos (
+    idPedidos INT AUTO_INCREMENT,
+    idCliente INT,
+    fecha DATE,
+    total DECIMAL(10,2),
+    CONSTRAINT idPedidos PRIMARY KEY (idPedidos),
+    CONSTRAINT fkIdCliente FOREIGN KEY (idCliente) REFERENCES Clientes(idCliente)
+);
+
+
+CREATE TABLE DetallesPedidos (
+	idPedido INT,
+	idMenu INT,
+	cantidad INT,
+	precio_unitario DECIMAL(10,2),
+	CONSTRAINT pkDetallesPedidos PRIMARY KEY (idPedido, idMenu),
+	CONSTRAINT fkIdpedido FOREIGN KEY (idPedido) REFERENCES Pedidos(idPedidos),
+	CONSTRAINT fkIdMenu FOREIGN KEY (idMenu) REFERENCES Menus(idMenu)
+);
