@@ -1,5 +1,6 @@
 # FiltroMYSQL
-
+#- Nombre del responsable: JUAN PABLO LÔPEZ AMAYA. Base de datos asignada: RESTAURANTE Gourmet Delight
+#- Comando SQL de la solucion:
 USE gourmetDelight;
 ~~~mysql
 show tables;
