@@ -1,0 +1,205 @@
+USE gourmetDelight;
+~~~mysql
+show tables;
++--------------------------+
+| Tables_in_gourmetDelight |
++--------------------------+
+| Clientes                 |
+| DetallesPedidos          |
+| Menus                    |
+| Pedidos                  |
++--------------------------+
+~~~
+
+1. Obtener la lista de todos los menús con sus precios
+
+~~~mysql
+SELECT nombre , precio FROM Menus;
+~~~
+
+2. Encontrar todos los pedidos realizados por el cliente 'Juan Perez'
+
+~~~mysql
+SELECT p.idPedidos, p.fecha , p.total FROM Pedidos p
+JOIN Clientes c ON c.idCliente = p.idCliente
+WHERE nombre = 'Juan Perez';
+~~~
+
+3. Listar los detalles de todos los pedidos, incluyendo el nombre del menú, cantidad y precio unitario
+~~~mysql
+SELECT dp.idPedido, m.nombre, dp.cantidad, dp.precio_unitario FROM DetallesPedidos dp
+LEFT JOIN Menus m ON m.idMenu = dp.idMenu;
+~~~
+
+4. Calcular el total gastado por cada cliente en todos sus pedidos
+~~~mysql
+SELECT c.nombre, SUM(p.total) AS TotalGastado FROM Clientes c
+JOIN Pedidos p ON p.idCliente = c.idCliente
+GROUP BY (c.nombre);
+~~~
+
+5. Encontrar los menús con un precio mayor a $10
+~~~mysql
+SELECT nombre, precio FROM Menus
+WHERE precio > 10;
+~~~
+6. Obtener el menú más caro pedido al menos una vez
+~~~mysql
+SELECT m.nombre, m.precio FROM Menus m
+JOIN DetallesPedidos dp ON m.idMenu = dp.idMenu
+GROUP BY dp.idMenu HAVING precio=(select max(precio) from Menus);
+~~~
+
+7. Listar los clientes que han realizado más de un pedido
+~~~mysql
+SELECT c.nombre, c.correo_electronico FROM Clientes c
+LEFT JOIN Pedidos p ON p.idCliente = c.idCliente; 
+~~~
+
+8. Obtener el cliente con el mayor gasto total
+~~~mysql
+SELECT c.nombre FROM Clientes c
+JOIN Pedidos p ON c.idCliente = p.idCliente
+GROUP BY  c.nombre
+ORDER BY SUM(p.total)  DESC 
+LIMIT 1;
+~~~
+
+9. Mostrar el pedido más reciente de cada cliente
+
+SELECT c.nombre, p.fecha, p.total FROM Clientes c
+JOIN Pedidos p ON p.idCliente = c.idCliente
+WHERE p.fecha = (SELECT  MAX(fecha) FROM Pedidos WHERE idCliente = c.idCliente);
+
+10. Obtener el detalle de pedidos (menús y cantidades) para el cliente 'Juan Perez'.
+
+~~~mysql
+SELECT * FROM Menus m
+JOIN DetallesPedidos dp ON dp.idMenu = m.idMenu
+JOIN Pedidos p ON dp.idPedido = p.idPedidos
+JOIN Clientes c ON c.idCliente = p.idCliente
+WHERE c.nombre ='Juan Perez';
+~~~
+
+
+Procedimientos Almacenados
+1. Crear un procedimiento almacenado para agregar un nuevo cliente
+~~~mysql
+DELIMITER //
+CREATE PROCEDURE insertarCliente (
+    IN p_nombre VARCHAR (100),
+    IN p_correo_electronico VARCHAR (100),
+    IN p_telefono VARCHAR (100),
+    IN p_fecha_registro DATE )
+BEGIN
+    INSERT INTO Clientes (nombre, correo_electronico, telefono, fecha_registro)
+    VALUES (p_nombre, p_correo_electronico, p_telefono, p_fecha_registro);
+END //
+DELIMITER ;
+
+CALL insertarCliente ('Sandra' , 'sandra@example.com', '31589564', '2024-06-12');
+
++-----------+-------------------+------------------------------+--------------+----------------+
+| idCliente | nombre            | correo_electronico           | telefono     | fecha_registro |
++-----------+-------------------+------------------------------+--------------+----------------+
+|         1 | Juan Perez        | juan.perez@example.com       | 123-456-7890 | 2024-01-01     |
+|         2 | Maria Lopez       | maria.lopez@example.com      | 123-456-7891 | 2024-01-05     |
+|         3 | Carlos Mendoza    | carlos.mendoza@example.com   | 123-456-7892 | 2024-02-10     |
+|         4 | Ana González      | ana.gonzalez@example.com     | 123-456-7893 | 2024-02-20     |
+|         5 | Luis Torres       | luis.torres@example.com      | 123-456-7894 | 2024-03-05     |
+|         6 | Laura Rivera      | laura.rivera@example.com     | 123-456-7895 | 2024-03-15     |
+|         7 | Fernando García   | fernando.garcia@example.com  | 123-456-7896 | 2024-04-20     |
+|         8 | Isabel Fernández  | isabel.fernandez@example.com | 123-456-7897 | 2024-04-25     |
+|         9 | Ricardo Morales   | ricardo.morales@example.com  | 123-456-7898 | 2024-05-01     |
+|        10 | Lucía Martínez    | lucia.martinez@example.com   | 123-456-7899 | 2024-05-05     |
+|        11 | Santiago Jiménez  | santiago.jimenez@example.com | 123-456-7900 | 2024-05-10     |
+|        12 | Patricia Romero   | patricia.romero@example.com  | 123-456-7901 | 2024-05-15     |
+|        13 | Sandra            | sandra@example.com           | 31589564     | 2024-06-12     |
++-----------+-------------------+------------------------------+--------------+----------------+
+~~~
+
+2. Crear un procedimiento almacenado para obtener los detalles de un pedido
+~~~mysql
+DELIMITER //
+
+CREATE PROCEDURE obtenerDetallesPedido (IN p_idPedido INT)
+BEGIN
+    SELECT * FROM DetallesPedidos dp
+    WHERE dp.idPedido = p_idPedido;
+END //
+
+DELIMITER ;
+
+
+CALL obtenerDetallesPedido (1);
++----------+--------+----------+-----------------+
+| idPedido | idMenu | cantidad | precio_unitario |
++----------+--------+----------+-----------------+
+|        1 |      1 |        1 |           12.50 |
+|        1 |      3 |        1 |           25.00 |
+|        1 |      6 |        3 |            3.00 |
++----------+--------+----------+-----------------+
+~~~
+
+3. Crear un procedimiento almacenado para actualizar el precio de un menú
+
+~~~mysql
+DELIMITER //
+
+CREATE PROCEDURE actualizarMenu(
+	IN p_idMenu INT,
+	IN p_precio DECIMAL(10,2) )
+BEGIN
+    UPDATE Menus
+    SET precio = p_precio;
+END //
+
+DELIMITER ;
+
+CALL actualizarMenu (1, 13.80);
++--------+-----------------+--------------------------------------------------------+--------+
+| idMenu | nombre          | descripcion                                            | precio |
++--------+-----------------+--------------------------------------------------------+--------+
+|      1 | Ensalada Cèsar  | Ensalada con lechuga romana, crutones y aderezo Cèsar  |  13.80 |
++--------+-----------------+--------------------------------------------------------+--------+
+~~~
+
+4. Crear un procedimiento almacenado para eliminar un cliente y sus pedidos
+~~~mysql
+DELIMITER //
+
+CREATE PROCEDURE eliminarClienteYSusPedidos(
+	IN p_idCliente INT )
+BEGIN
+    
+    DELETE FROM Pedidos 
+    WHERE idCliente = p_idCliente;
+    
+    DELETE FROM Clientes 
+    WHERE idCliente = p_idCliente;
+    
+END //
+DELIMITER ;
+~~~
+
+5. Crear un procedimiento almacenado para obtener el total gastado por un cliente
+~~~mysql
+DELIMITER //
+
+CREATE PROCEDURE totalGastado (
+	IN p_idCliente INT )
+BEGIN 
+	SELECT c.nombre, SUM(p.total) AS totalGastado FROM Clientes c
+	JOIN Pedidos p ON p.idCliente = c.idCliente
+	WHERE c.idCliente = p_idCliente
+	GROUP BY c.nombre;
+END //
+DELIMITER ;
+CALL totalGastado (1);
++------------+--------------+
+| nombre     | totalGastado |
++------------+--------------+
+| Juan Perez |        65.50 |
++------------+--------------+
+
+~~~
